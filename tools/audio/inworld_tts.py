@@ -112,8 +112,8 @@ class InworldTTS(BaseTool):
             },
             "apply_text_normalization": {
                 "type": "string",
-                "default": "ON",
-                "enum": ["ON", "OFF", "APPLY_TEXT_NORMALIZATION_UNSPECIFIED"],
+                "default": "auto",
+                "enum": ["auto", "on", "off"],
             },
             "output_path": {"type": "string"},
         },
@@ -130,7 +130,11 @@ class InworldTTS(BaseTool):
         "voice_id",
         "model_id",
         "format",
+        "sample_rate_hertz",
+        "language",
         "delivery_mode",
+        "timestamp_type",
+        "apply_text_normalization",
     ]
     side_effects = ["writes audio file to output_path", "calls Inworld API"]
     user_visible_verification = ["Listen to generated audio for intelligibility and tone"]
@@ -225,7 +229,7 @@ class InworldTTS(BaseTool):
             "voiceId": voice_id,
             "modelId": model_id,
             "deliveryMode": inputs.get("delivery_mode", "BALANCED"),
-            "timestampType": inputs.get("timestamp_type", "WORD"),
+            "timestampType": self._timestamp_type(inputs),
             "applyTextNormalization": self._normalization_mode(inputs),
             "audioConfig": {
                 "audioEncoding": self._ENCODINGS[fmt],
@@ -280,7 +284,7 @@ class InworldTTS(BaseTool):
 
     @staticmethod
     def _normalization_mode(inputs: dict[str, Any]) -> str:
-        value = str(inputs.get("apply_text_normalization", "ON")).upper()
+        value = str(inputs.get("apply_text_normalization", "auto")).upper()
         return {
             "AUTO": "APPLY_TEXT_NORMALIZATION_UNSPECIFIED",
             "APPLY_TEXT_NORMALIZATION_UNSPECIFIED": (
@@ -289,3 +293,37 @@ class InworldTTS(BaseTool):
             "ON": "ON",
             "OFF": "OFF",
         }.get(value, "ON")
+
+    @staticmethod
+    def _timestamp_type(inputs: dict[str, Any]) -> str:
+        """Resolve the selector's boolean timestamp control to Inworld's enum."""
+        if inputs.get("timestamp_type") is not None:
+            return str(inputs["timestamp_type"]).upper()
+        if "timestamps" in inputs:
+            return "WORD" if inputs["timestamps"] else "TIMESTAMP_TYPE_UNSPECIFIED"
+        return "WORD"
+
+    @classmethod
+    def _effective_inputs(cls, inputs: dict[str, Any]) -> dict[str, Any]:
+        """Return the effective API inputs used to generate the audio.
+
+        Selector aliases and omitted defaults are canonicalized so equivalent
+        requests share a key while every audio-affecting option remains part of
+        it.
+        """
+        return {
+            "text": str(inputs.get("text", "")),
+            "voice_id": inputs.get("voice_id") or inputs.get("voice") or "Dennis",
+            "model_id": (
+                inputs.get("model_id") or inputs.get("model") or "inworld-tts-2"
+            ),
+            "format": str(inputs.get("format", "mp3")).lower(),
+            "sample_rate_hertz": int(inputs.get("sample_rate_hertz", 48000)),
+            "language": inputs.get("language") or inputs.get("language_code"),
+            "delivery_mode": inputs.get("delivery_mode", "BALANCED"),
+            "timestamp_type": cls._timestamp_type(inputs),
+            "apply_text_normalization": cls._normalization_mode(inputs),
+        }
+
+    def idempotency_key(self, inputs: dict[str, Any]) -> str:
+        return super().idempotency_key(self._effective_inputs(inputs))

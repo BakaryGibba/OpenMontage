@@ -154,3 +154,66 @@ def test_selector_aliases_and_wav_encoding(monkeypatch, tmp_path):
         captured["json"]["applyTextNormalization"]
         == "APPLY_TEXT_NORMALIZATION_UNSPECIFIED"
     )
+
+
+def test_normalization_schema_matches_selector_contract():
+    schema = InworldTTS.input_schema["properties"]["apply_text_normalization"]
+    assert schema["default"] == "auto"
+    assert schema["enum"] == ["auto", "on", "off"]
+
+
+def test_idempotency_key_covers_audio_affecting_inputs():
+    tool = InworldTTS()
+    baseline = {"text": "Hello"}
+    variants = {
+        "voice_id": "Alex",
+        "model_id": "inworld-tts-2-max",
+        "format": "wav",
+        "sample_rate_hertz": 24000,
+        "language": "fr-FR",
+        "delivery_mode": "CREATIVE",
+        "timestamp_type": "CHARACTER",
+        "apply_text_normalization": "off",
+    }
+
+    for field, value in variants.items():
+        assert tool.idempotency_key(baseline) != tool.idempotency_key(
+            {**baseline, field: value}
+        ), field
+
+
+def test_idempotency_key_canonicalizes_selector_aliases_and_defaults():
+    tool = InworldTTS()
+    canonical = {
+        "text": "Bonjour",
+        "voice_id": "Alex",
+        "model_id": "inworld-tts-2",
+        "language": "fr-FR",
+        "timestamp_type": "WORD",
+        "apply_text_normalization": "auto",
+    }
+    aliases = {
+        "text": "Bonjour",
+        "voice": "Alex",
+        "model": "inworld-tts-2",
+        "language_code": "fr-FR",
+        "timestamps": True,
+        "apply_text_normalization": "AUTO",
+    }
+
+    assert tool.idempotency_key(canonical) == tool.idempotency_key(aliases)
+    assert tool.idempotency_key({"text": "Hello"}) == tool.idempotency_key(
+        {
+            "text": "Hello",
+            "voice_id": "Dennis",
+            "model_id": "inworld-tts-2",
+            "format": "mp3",
+            "sample_rate_hertz": 48000,
+            "delivery_mode": "BALANCED",
+            "timestamp_type": "WORD",
+            "apply_text_normalization": "auto",
+        }
+    )
+    assert tool.idempotency_key({"text": "Hello", "timestamps": False}) != (
+        tool.idempotency_key({"text": "Hello", "timestamps": True})
+    )
