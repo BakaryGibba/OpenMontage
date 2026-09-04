@@ -40,6 +40,7 @@ GOOGLE_API_KEY=              # Google TTS + Imagen + Lyria music + Gemini Omni/V
 
 # VOICE + MUSIC
 ELEVENLABS_API_KEY=          # TTS, music, sound effects (10K chars/month free)
+INWORLD_API_KEY=             # Inworld Realtime TTS-2 expressive narration
 FISH_AUDIO_API_KEY=          # fish.audio TTS (voice cloning via reference_id, inline emotion tags)
 OPENAI_API_KEY=              # OpenAI TTS + GPT Image 2 images
 XAI_API_KEY=                 # xAI Grok image generation/editing + Grok video generation
@@ -497,6 +498,30 @@ machine-readable Atlas page and should be reconfirmed before a paid batch.
 | Scale | $330/mo | 2,000,000 | Priority support |
 
 **Free tier:** 10,000 characters/month (roughly 2-3 minutes of narration). API access included. Music generation and sound effects also available on free tier with limited credits.
+
+---
+
+### Inworld — Realtime TTS-2
+
+> **Expressive multilingual narration with alignment metadata.** Inworld's
+> non-streaming API returns MP3 or LINEAR16 audio and can include word- or
+> character-level timestamps for captions and lip-sync workflows.
+
+**Tool unlocked:** `inworld_tts`
+**Env var:** `INWORLD_API_KEY`
+
+1. Create an API key in the Inworld Portal.
+2. Copy the Base64 credential exactly as shown.
+3. Add `INWORLD_API_KEY=...` to `.env`.
+4. Select it through `tts_selector` with `preferred_provider: "inworld"`.
+
+The adapter supports built-in or custom voice IDs, BCP-47 language hints,
+stable/balanced/creative delivery modes, optional text normalization, and word
+or character timestamps. The non-streaming endpoint accepts up to 2,000 input
+characters per request.
+
+On-demand Realtime TTS-2 pricing is $25 per million characters. Volume plans
+may be lower; verify current pricing before large runs.
 
 ---
 
@@ -1418,6 +1443,7 @@ These tools require only FFmpeg or Python packages — no GPU, no API key.
 | **Azure AI Speech** | `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION` | `azure_stt`, `azure_tts` | Free tier + paid |
 | **Google** | `GOOGLE_API_KEY` (or `GEMINI_API_KEY`) | `google_tts`, `google_imagen`, `google_music`, `gemini_omni_video`, `veo_video` | Free tier (TTS) + paid |
 | **ElevenLabs** | `ELEVENLABS_API_KEY` | `elevenlabs_tts`, `music_gen` | Free tier + paid |
+| **Inworld** | `INWORLD_API_KEY` | `inworld_tts` | Pay-as-you-go |
 | **fish.audio** | `FISH_AUDIO_API_KEY` | `fish_audio_tts` | Free tier (s2.1-pro-free) + paid |
 | **fal.ai** | `FAL_KEY` | `flux_image`, `recraft_image`, `kling_video`, `veo_video`, `seedance_video`, `gemini_omni_fal`, `minimax_fal_video` | Pay-as-you-go |
 | **Atlas Cloud** | `ATLASCLOUD_API_KEY` | `atlas_image`, `atlas_video` | Pay-as-you-go |
@@ -1446,7 +1472,7 @@ How many providers cover each capability:
 |-----------|----------------|-----------------|--------------|
 | **Image Generation** | FLUX, Kling Official, Grok, Google Imagen, GPT Image 2, Recraft | Local Diffusion | Pexels, Pixabay (stock) |
 | **Video Generation** | Grok, Kling Official, fal.ai, Seedance via Volcengine Ark, Runway, Veo, Gemini Omni, Higgsfield, MiniMax, HeyGen, Tencent Hunyuan, ComfyUI Partner Nodes | WAN, Hunyuan, CogVideo, LTX, ComfyUI WAN, ComfyUI MiniMax H3 | Pexels, Pixabay (stock) |
-| **Text-to-Speech** | Azure AI Speech, ElevenLabs, fish.audio, Google TTS, Kling Official, OpenAI | Piper | Piper, Google free tier, ElevenLabs free tier, Azure free tier, fish.audio s2.1-pro-free |
+| **Text-to-Speech** | Azure AI Speech, ElevenLabs, Inworld, fish.audio, Google TTS, Kling Official, OpenAI | Piper | Piper, Google free tier, ElevenLabs free tier, Azure free tier, fish.audio s2.1-pro-free |
 | **Music Generation** | ElevenLabs, Suno, Google Lyria | — | ElevenLabs free tier |
 | **Post-Production** | — | FFmpeg (compose, stitch, trim, mix, enhance, grade) | All free |
 | **Analysis** | — | WhisperX, Scene Detect, Frame Sampler, CLIP/BLIP-2 | All free |

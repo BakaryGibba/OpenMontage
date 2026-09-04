@@ -545,6 +545,7 @@ Each tool declares which Layer 3 skills it relies on. The agent reads Layer 1 to
 | Provider | Type | Notes |
 |----------|------|-------|
 | **ElevenLabs** | Cloud API | Premium voice quality |
+| **Inworld Realtime TTS-2** | Cloud API | Expressive multilingual speech with word timestamps |
 | **Google TTS** | Cloud API | 700+ voices, 50+ languages — best for localization |
 | **Kling Official TTS** | Cloud API | Official Kling narration when a `voice_id` is known |
 | **OpenAI TTS** | Cloud API | Fast, affordable |
